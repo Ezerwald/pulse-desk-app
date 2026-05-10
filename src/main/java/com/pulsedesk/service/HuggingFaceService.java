@@ -38,6 +38,11 @@ public class HuggingFaceService {
      * @return HuggingFaceResult with isTicket flag and ticket fields if applicable
      */
     public HuggingFaceResult analyze(String commentText) {
+        if (apiToken == null || apiToken.startsWith("your_huggingface")) {
+            log.error("HuggingFace API token is not configured.");
+            return buildFallbackResult();
+        }
+
         log.debug("Sending comment to HuggingFace API: '{}'", commentText);
 
         String prompt = buildPrompt(commentText);
