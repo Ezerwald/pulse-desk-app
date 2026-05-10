@@ -107,7 +107,7 @@ src/main/resources/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/ezerwald/pulsedesk.git
+git clone https://github.com/Ezerwald/pulse-desk-app.git
 cd pulsedesk
 ```
 
@@ -127,7 +127,7 @@ The application starts on `http://localhost:8080`.
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/ezerwald/pulsedesk.git
+git clone https://github.com/Ezerwald/pulse-desk-app.git
 cd pulsedesk
 ```
 
