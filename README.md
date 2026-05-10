@@ -1,9 +1,22 @@
 # PulseDesk — Comment-to-Ticket Triage
 
-## Description
-A Spring Boot backend that automatically triages user comments using the
-Hugging Face AI API. Comments that describe real issues are converted into
-structured support tickets with a title, category, priority, and summary.
+Support teams waste hours manually reading through user comments across app stores,
+feedback forms, and chat channels — deciding which ones deserve a ticket and which
+ones are just noise.
+
+PulseDesk solves this. It is a backend service that sits behind any platform with a
+comments section and automatically triages incoming user feedback using AI. Every
+comment is analyzed in real time: if it describes a real bug, a billing issue, or an
+actionable feature request, PulseDesk creates a structured support ticket with a
+title, category, priority, and summary — ready for your team to act on. Comments that
+are compliments, vague feedback, or personal preferences are silently ignored.
+
+**The result:** your support team sees *only what matters*, already categorized and
+prioritized, with zero manual triage.
+
+---
+
+Built with Spring Boot and the Hugging Face Inference API (Llama 3.1 8B).  
 
 **Developed for the IBM Application Developer Internship technical assignment.**
 
