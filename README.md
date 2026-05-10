@@ -1,10 +1,26 @@
 # PulseDesk — Comment-to-Ticket Triage
 
-A Spring Boot backend that automatically triages user comments using the
-Hugging Face AI API. Comments that describe real issues are converted into
-structured support tickets with a title, category, priority, and summary.
+Support teams waste hours manually reading through user comments across app stores,
+feedback forms, and chat channels — deciding which ones deserve a ticket and which
+ones are just noise.
+
+PulseDesk solves this. It is a backend service that sits behind any platform with a
+comments section and automatically triages incoming user feedback using AI. Every
+comment is analyzed in real time: if it describes a real bug, a billing issue, or an
+actionable feature request, PulseDesk creates a structured support ticket with a
+title, category, priority, and summary — ready for your team to act on. Comments that
+are compliments, vague feedback, or personal preferences are silently ignored.
+
+**The result:** your support team sees *only what matters*, already categorized and
+prioritized, with zero manual triage.
+
+---
+
+Built with Spring Boot and the Hugging Face Inference API (Llama 3.1 8B).  
 
 **Developed for the IBM Application Developer Internship technical assignment.**
+
+---
 
 <img width="1776" height="966" alt="image" src="https://github.com/user-attachments/assets/0b8ee542-0dd6-4772-8837-7ceda9e748ea" />
 
@@ -17,83 +33,6 @@ structured support tickets with a title, category, priority, and summary.
 * **RESTful Architecture**: Clean API design with standardized HTTP status codes and global exception handling.
 * **Self-Documenting**: Full OpenAPI/Swagger integration for rapid testing.
 * **Containerized**: Production-ready Docker configuration with multi-stage builds and resource limits.
-
----
-
-## Tech Stack
-
-| Layer | Technology |
-| --- | --- |
-| **Language** | Java 21 (LTS) |
-| **Framework** | Spring Boot 3.3+ |
-| **Database** | H2 (In-Memory) + Spring Data JPA |
-| **AI Engine** | Hugging Face API — Llama 3.1 8B (Novita) |
-| **API Docs** | Springdoc OpenAPI (Swagger UI) |
-| **Deployment** | Docker & Docker Compose |
-
----
-
-## Architecture
-
-```text
-[Client]
-   │
-   │  POST /comments
-   ▼
-[CommentController]
-   │
-   ▼
-[CommentService] ──────────────────────────────► [HuggingFaceService]
-   │                                                      │
-   │  save comment                                        │  POST chat/completions
-   ▼                                                      ▼
-[CommentRepository]                             [HF Inference API]
-   │                                            (Llama 3.1 8B via Novita)
-   │                                                      │
-   │                                                      │  JSON response
-   │                                                      ▼
-   │                                             parse isTicket, title,
-   │                                             category, priority, summary
-   │                                                      │
-   │                ┌─────────────────────────────────────┘
-   │                │  if isTicket = true
-   │                ▼
-   │          [TicketRepository]
-   │                │
-   │                │  save ticket
-   │                ▼
-   │            [H2 Database]
-   │                │
-   └───────────────►┘
-   │
-   │  201 Created
-   ▼
-[Client]  ◄── Comment + linked Ticket (or null)
-```
-
-A new comment flows through:
-1. `POST /comments` is received by `CommentController`
-2. `CommentService` saves the comment and calls `HuggingFaceService`
-3. HuggingFaceService sends a structured prompt to Llama 3.1 8B and parses the JSON response
-4. If the AI flags the comment as an issue, a `Ticket` is created and linked
-5. The full result is returned in the API response
-
----
-## Project Structure
-```
-src/main/java/com/pulsedesk/
-├── config/ # Spring beans, OpenAPI config
-├── controller/ # REST endpoints
-├── service/ # Business logic + AI integration
-├── repository/ # Spring Data JPA interfaces
-├── model/ # JPA entities (Comment, Ticket)
-├── dto/ # Request/Response objects
-└── exception/ # Custom exceptions + global handler
-
-src/main/resources/
-├── application.properties
-└── static/ # Frontend dashboard (HTML/CSS/JS)
-```
 
 ---
 
@@ -238,6 +177,83 @@ Validation errors include a field-level `errors` map:
 | `http://localhost:8080`               | Frontend dashboard       |
 | `http://localhost:8080/swagger-ui.html` | Interactive API docs   |
 | `http://localhost:8080/h2-console`    | Database browser (dev)   |
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| **Language** | Java 21 (LTS) |
+| **Framework** | Spring Boot 3.3+ |
+| **Database** | H2 (In-Memory) + Spring Data JPA |
+| **AI Engine** | Hugging Face API — Llama 3.1 8B (Novita) |
+| **API Docs** | Springdoc OpenAPI (Swagger UI) |
+| **Deployment** | Docker & Docker Compose |
+
+---
+
+## Architecture
+
+```text
+[Client]
+   │
+   │  POST /comments
+   ▼
+[CommentController]
+   │
+   ▼
+[CommentService] ──────────────────────────────► [HuggingFaceService]
+   │                                                      │
+   │  save comment                                        │  POST chat/completions
+   ▼                                                      ▼
+[CommentRepository]                             [HF Inference API]
+   │                                            (Llama 3.1 8B via Novita)
+   │                                                      │
+   │                                                      │  JSON response
+   │                                                      ▼
+   │                                             parse isTicket, title,
+   │                                             category, priority, summary
+   │                                                      │
+   │                ┌─────────────────────────────────────┘
+   │                │  if isTicket = true
+   │                ▼
+   │          [TicketRepository]
+   │                │
+   │                │  save ticket
+   │                ▼
+   │            [H2 Database]
+   │                │
+   └───────────────►┘
+   │
+   │  201 Created
+   ▼
+[Client]  ◄── Comment + linked Ticket (or null)
+```
+
+A new comment flows through:
+1. `POST /comments` is received by `CommentController`
+2. `CommentService` saves the comment and calls `HuggingFaceService`
+3. HuggingFaceService sends a structured prompt to Llama 3.1 8B and parses the JSON response
+4. If the AI flags the comment as an issue, a `Ticket` is created and linked
+5. The full result is returned in the API response
+
+---
+## Project Structure
+```
+src/main/java/com/pulsedesk/
+├── config/ # Spring beans, OpenAPI config
+├── controller/ # REST endpoints
+├── service/ # Business logic + AI integration
+├── repository/ # Spring Data JPA interfaces
+├── model/ # JPA entities (Comment, Ticket)
+├── dto/ # Request/Response objects
+└── exception/ # Custom exceptions + global handler
+
+src/main/resources/
+├── application.properties
+└── static/ # Frontend dashboard (HTML/CSS/JS)
+```
 
 ---
 
