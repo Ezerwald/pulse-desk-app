@@ -10,6 +10,7 @@ import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -23,11 +24,14 @@ public class HuggingFaceService {
     @Value("${huggingface.api.url}")
     private String apiUrl;
 
+    @Value("${huggingface.api.model}")
+    private String apiModel;
+
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
 
     /**
-     * Sends a comment to the Hugging Face Mistral model and returns a
+     * Sends a comment to the Hugging Face model and returns a
      * structured triage result.
      *
      * @param commentText the raw user comment to analyze
@@ -46,14 +50,9 @@ public class HuggingFaceService {
 
     // -- Private helpers --
 
-    /**
-     * Builds the instruction prompt for Mistral.
-     * The prompt uses Mistral's [INST] format which the model is trained on.
-     * Asks explicitly for JSON to make parsing reliable.
-     */
     private String buildPrompt(String commentText) {
         return """
-                [INST] You are a support triage assistant for a platform called PulseDesk.
+                You are a support triage assistant for a platform called PulseDesk.
                 Analyze the user comment below and respond ONLY with a single valid JSON object.
                 Do not write any explanation, markdown, or text outside the JSON.
 
@@ -73,7 +72,6 @@ public class HuggingFaceService {
                 - Set isTicket to false for compliments, greetings, vague feedback, or off-topic messages
                 - When isTicket is false, set title, category, priority, summary all to null
                 - Priority: high = app is broken or data is lost; medium = feature broken but workaround exists; low = minor issue or improvement
-                [/INST]
                 """.formatted(commentText);
     }
 
@@ -86,13 +84,12 @@ public class HuggingFaceService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.setBearerAuth(apiToken);
 
+        Map<String, Object> message = Map.of("role", "user", "content", prompt);
         Map<String, Object> requestBody = Map.of(
-                "inputs", prompt,
-                "parameters", Map.of(
-                        "max_new_tokens", 250,
-                        "temperature", 0.1,
-                        "return_full_text", false
-                )
+                "model", apiModel,
+                "messages", List.of(message),
+                "max_tokens", 300,
+                "temperature", 0.1
         );
 
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
@@ -108,14 +105,15 @@ public class HuggingFaceService {
             }
 
             JsonNode root = objectMapper.readTree(response.getBody());
-            JsonNode generatedText = root.get(0).get("generated_text");
 
-            if (generatedText == null) {
+            JsonNode content = root.path("choices").get(0).path("message").path("content");
+
+            if (content.isMissingNode()) {
                 log.error("Unexpected HuggingFace response structure: {}", response.getBody());
                 return fallbackResult();
             }
 
-            return generatedText.asText();
+            return content.asText();
 
         } catch (Exception e) {
             log.error("Failed to call HuggingFace API: {}", e.getMessage());
@@ -146,9 +144,7 @@ public class HuggingFaceService {
             boolean isTicket = node.path("isTicket").asBoolean(false);
 
             if (!isTicket) {
-                return HuggingFaceResult.builder()
-                        .isTicket(false)
-                        .build();
+                return HuggingFaceResult.builder().isTicket(false).build();
             }
 
             return HuggingFaceResult.builder()
