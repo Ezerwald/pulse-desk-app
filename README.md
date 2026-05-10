@@ -112,8 +112,15 @@ cd pulsedesk
 ```
 
 **2. Export your token to your shell environment**
+
+On macOS/Linux:
 ```bash
 export HF_TOKEN=hf_your_token_here
+```
+
+On Windows (PowerShell):
+```powershell
+$env:HF_TOKEN="hf_your_token_here"
 ```
 
 **3. Run the application**
@@ -127,7 +134,7 @@ The application starts on `http://localhost:8080`.
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/Ezerwald/pulse-desk-app.git
+git clone https://github.com/Ezerwald/pul se-desk-app.git
 cd pulsedesk
 ```
 
