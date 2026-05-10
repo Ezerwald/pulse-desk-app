@@ -38,6 +38,6 @@ public class Comment {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-        this.hasTicket = false;   // default: no ticket yet
+        this.hasTicket = false;
     }
 }
