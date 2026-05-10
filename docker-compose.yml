@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  pulsedesk:
+    build: .
+    container_name: pulsedesk-service
+    ports:
+      - "8080:8080"
+    environment:
+      # Maps the properties in your application.properties to the .env values
+      - HF_TOKEN=${HF_TOKEN}
+      - HUGGINGFACE_API_URL=${HF_API_URL}
+      - HUGGINGFACE_API_MODEL=${HF_API_MODEL}
+      - SPRING_JPA_SHOW_SQL=${SPRING_JPA_SHOW_SQL}
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
