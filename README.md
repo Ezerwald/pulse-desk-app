@@ -4,7 +4,7 @@ A Spring Boot backend that automatically triages user comments using the
 Hugging Face AI API. Comments that describe real issues are converted into
 structured support tickets with a title, category, priority, and summary.
 
-**Developed for the IBM Application Developer Internship technical assessment.**
+**Developed for the IBM Application Developer Internship technical assignment.**
 
 ---
 
