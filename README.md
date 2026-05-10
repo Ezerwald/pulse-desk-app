@@ -6,6 +6,8 @@ structured support tickets with a title, category, priority, and summary.
 
 **Developed for the IBM Application Developer Internship technical assignment.**
 
+<img width="1776" height="966" alt="image" src="https://github.com/user-attachments/assets/0b8ee542-0dd6-4772-8837-7ceda9e748ea" />
+
 ---
 
 ## Features
