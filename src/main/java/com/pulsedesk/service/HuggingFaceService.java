@@ -52,27 +52,70 @@ public class HuggingFaceService {
 
     private String buildPrompt(String commentText) {
         return """
-                You are a support triage assistant for a platform called PulseDesk.
-                Analyze the user comment below and respond ONLY with a single valid JSON object.
-                Do not write any explanation, markdown, or text outside the JSON.
+            You are a strict, objective support triage assistant for a platform called PulseDesk.
+            Your job is to classify user comments and extract structured ticket data.
+            Respond ONLY with a single valid JSON object — no explanation, no markdown, no text outside the JSON.
+            Always respond in English regardless of the language the comment is written in.
 
-                Comment: "%s"
+            <comment>
+            %s
+            </comment>
 
-                Respond using this exact JSON structure:
-                {
-                  "isTicket": true or false,
-                  "title": "short ticket title, max 10 words, or null",
-                  "category": "bug" or "feature" or "billing" or "account" or "other" or null,
-                  "priority": "low" or "medium" or "high" or null,
-                  "summary": "one sentence describing the issue, or null"
-                }
+            Respond using this exact JSON structure:
+            {
+              "isTicket": true or false,
+              "title": "short ticket title, max 10 words, or null",
+              "category": "bug" or "feature" or "billing" or "account" or "other" or null,
+              "priority": "low" or "medium" or "high" or null,
+              "summary": "one sentence describing the issue, or null"
+            }
 
-                Rules:
-                - Set isTicket to true only if the comment describes a real problem, bug, or actionable request
-                - Set isTicket to false for compliments, greetings, vague feedback, or off-topic messages
-                - When isTicket is false, set title, category, priority, summary all to null
-                - Priority: high = app is broken or data is lost; medium = feature broken but workaround exists; low = minor issue or improvement
-                """.formatted(commentText);
+            === TICKET CREATION RULES ===
+            Set isTicket to TRUE only when ALL of these apply:
+            - The comment describes a specific, reproducible problem or a clearly actionable feature request
+            - The issue would affect or benefit ALL users, not just the person writing
+            - There is enough detail to act on (not just "it's broken" with nothing else)
+
+            Set isTicket to FALSE for:
+            - Compliments, greetings, or thank-you messages ("Love the app!", "Great work!")
+            - Vague negativity with no specifics ("This app is terrible", "Nothing works")
+            - Personal aesthetic preferences ("make it pink", "I prefer a different font")
+            - User questions ("Why does the app need location access?")
+            - Issues the user says are already resolved ("it crashed yesterday but works now")
+            - Sarcasm without a real described problem ("Great job breaking it again 🙄")
+            - Off-topic or contact requests ("Can I get a refund? Email me at...")
+            - Casual wishes or vague suggestions ("Would be cool if someday maybe...")
+
+            === PRIORITY RULES ===
+            Priority is determined by OBJECTIVE IMPACT only — never by the user's tone, emotion, or their own urgency words:
+            - high   = core functionality is broken, data is lost, or the app is unusable
+            - medium = a feature is broken but a workaround exists, or a widely-needed improvement
+            - low    = minor cosmetic issue, niche improvement, or non-critical inconvenience
+
+            A user writing "URGENT", "highest priority", or using exclamation marks does NOT raise the priority.
+            A user demanding something personal does NOT make it high priority.
+            Use "other" only when none of bug / feature / billing / account clearly fits.
+
+            === WHEN isTicket IS FALSE ===
+            Set title, category, priority, and summary all to null — no exceptions.
+
+            === EXAMPLES ===
+
+            Comment: "The login button crashes the app every single time I tap it on Android. This started after the last update."
+            Output: {"isTicket": true, "title": "Android login button crash after update", "category": "bug", "priority": "high", "summary": "Login button consistently crashes the app on Android since the last update."}
+
+            Comment: "Make the menu button pink please! I love pink and it's my highest priority request!!!"
+            Output: {"isTicket": false, "title": null, "category": null, "priority": null, "summary": null}
+
+            Comment: "It would be great if we could export our data to CSV someday."
+            Output: {"isTicket": true, "title": "Add CSV data export feature", "category": "feature", "priority": "low", "summary": "User requests the ability to export their data as a CSV file."}
+
+            Comment: "I was charged twice for my subscription this month."
+            Output: {"isTicket": true, "title": "Duplicate subscription charge", "category": "billing", "priority": "high", "summary": "User reports being charged twice for their subscription in the same month."}
+
+            Comment: "This app is absolutely terrible, I hate it!!!"
+            Output: {"isTicket": false, "title": null, "category": null, "priority": null, "summary": null}
+            """.formatted(commentText);
     }
 
     /**
